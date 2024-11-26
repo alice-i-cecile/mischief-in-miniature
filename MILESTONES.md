@@ -2,8 +2,8 @@
 
 ## Ideation
 
-- [] create an mdbook
-- [] define goals
+- [x] create an mdbook
+- [x] define goals
 - [] develop concepts
 - [] create game design docs
 - [] create mock Steam pages
