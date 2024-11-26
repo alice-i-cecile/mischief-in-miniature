@@ -4,7 +4,7 @@
 
 - [x] create an mdbook
 - [x] define goals
-- [] develop concepts
-- [] create game design docs
-- [] create mock Steam pages
+- [x] develop concepts
+- [x] create game design docs
 - [] pick a concept
+- [] create a mock Steam page for the chosen concept
