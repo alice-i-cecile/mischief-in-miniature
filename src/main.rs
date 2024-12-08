@@ -11,20 +11,20 @@
 //!
 //! For a kinematic character controller, see the `kinematic_character_3d` example.
 
-mod examples_common_3d;
-mod plugin;
+mod pausing;
+mod physics;
 
 use avian3d::{math::*, prelude::*};
 use bevy::prelude::*;
-use examples_common_3d::ExampleCommonPlugin;
-use plugin::*;
+use pausing::PausePlugin;
+use physics::character_controller::{CharacterControllerBundle, CharacterControllerPlugin};
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            ExampleCommonPlugin,
             PhysicsPlugins::default(),
+            PausePlugin,
             CharacterControllerPlugin,
         ))
         .add_systems(Startup, setup)

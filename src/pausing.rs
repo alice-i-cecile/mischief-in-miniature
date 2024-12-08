@@ -1,19 +1,13 @@
 use std::time::Duration;
 
 use avian3d::prelude::*;
-use bevy::{
-    color::palettes::css::TOMATO,
-    diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
-    prelude::*,
-};
+use bevy::prelude::*;
 
-pub struct ExampleCommonPlugin;
+pub(super) struct PausePlugin;
 
-impl Plugin for ExampleCommonPlugin {
+impl Plugin for PausePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((FrameTimeDiagnosticsPlugin,))
-            .init_state::<AppState>()
-            .add_systems(Startup, setup)
+        app.init_state::<AppState>()
             .add_systems(
                 OnEnter(AppState::Paused),
                 |mut time: ResMut<Time<Physics>>| time.pause(),
@@ -22,7 +16,6 @@ impl Plugin for ExampleCommonPlugin {
                 OnExit(AppState::Paused),
                 |mut time: ResMut<Time<Physics>>| time.unpause(),
             )
-            .add_systems(Update, update_fps_text)
             .add_systems(Update, pause_button)
             .add_systems(Update, step_button.run_if(in_state(AppState::Paused)));
     }
@@ -52,37 +45,5 @@ fn pause_button(
 fn step_button(mut time: ResMut<Time<Physics>>, keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Enter) {
         time.advance_by(Duration::from_secs_f64(1.0 / 60.0));
-    }
-}
-
-#[derive(Component)]
-struct FpsText;
-
-fn setup(mut commands: Commands) {
-    commands.spawn((
-        Text::new("FPS: "),
-        TextFont {
-            font_size: 20.0,
-            ..default()
-        },
-        TextColor::from(TOMATO),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(5.0),
-            left: Val::Px(5.0),
-            ..default()
-        },
-        FpsText,
-    ));
-}
-
-fn update_fps_text(diagnostics: Res<DiagnosticsStore>, mut query: Query<&mut Text, With<FpsText>>) {
-    for mut text in &mut query {
-        if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-            if let Some(value) = fps.smoothed() {
-                // Update the value of the second section
-                text.0 = format!("FPS: {value:.2}");
-            }
-        }
     }
 }

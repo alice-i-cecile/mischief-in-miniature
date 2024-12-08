@@ -1,5 +1,7 @@
-use avian3d::{math::*, prelude::*};
+use avian3d::prelude::*;
 use bevy::{ecs::query::Has, prelude::*};
+
+use avian3d::math::*;
 
 pub struct CharacterControllerPlugin;
 
