@@ -2,5 +2,5 @@
 authors = ["Alice I Cecile"]
 language = "en"
 multilingual = false
-src = "src"
+src = "design"
 title = "Design"

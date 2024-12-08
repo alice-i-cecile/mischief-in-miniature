@@ -1,8 +1,16 @@
-[package]
-name = "mischief-in-miniature"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["crates/*"]
 
-[dependencies]
+[workspace.dependencies]
 avian3d = { git = "https://github.com/Jondolf/avian", rev = "114554bf61320e03d778c5d8ca67e9ae381476c5" }
 bevy = "0.15.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+missing_docs = "forbid"
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
