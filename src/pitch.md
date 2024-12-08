@@ -1,6 +1,4 @@
-# Katamari Monsters
-
-## Pitch
+# Game Pitch
 
 Tiny terrors wreak charming chaos.
 
