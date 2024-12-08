@@ -19,8 +19,14 @@
 ## Basic 3rd person camera
 
 - [] orientable character model
+- [] controls move the player relative to their orientation
 - [] camera follows character model
 - [] camera smoothing
+
+## Colliders from meshes
+
+- [] generate collider based on mesh
+- [] set models on top of the zero plane
 
 ## Data-driven design
 
