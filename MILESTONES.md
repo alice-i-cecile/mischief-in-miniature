@@ -7,4 +7,11 @@
 - [x] develop concepts
 - [x] create game design docs
 - [x] pick a concept
-- [] create a mock Steam page for the chosen concept
+- [x] create a mock Steam page for the chosen concept
+
+## Hello World
+
+- [] create a Bevy project
+- [] add camera
+- [] add physics
+- [] make sure the player can jump
