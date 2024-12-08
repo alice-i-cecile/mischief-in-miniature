@@ -1,15 +1,4 @@
-//! A basic implementation of a character controller for a dynamic rigid body.
-//!
-//! This showcases the following:
-//!
-//! - Basic directional movement and jumping
-//! - Support for both keyboard and gamepad input
-//! - A configurable maximum slope angle for jumping
-//! - Loading a platformer environment from a glTF
-//!
-//! The character controller logic is contained within the `plugin` module.
-//!
-//! For a kinematic character controller, see the `kinematic_character_3d` example.
+//! A Katamari-inspired 3D action game where you play a toy that's come to life, causing chaos.
 
 mod pausing;
 mod physics;
@@ -31,6 +20,7 @@ fn main() {
         .run();
 }
 
+/// Setup the initial scene
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

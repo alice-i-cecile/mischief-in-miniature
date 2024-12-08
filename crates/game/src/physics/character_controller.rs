@@ -1,8 +1,11 @@
+//! Movement and controls for playable characters.
+
 use avian3d::prelude::*;
 use bevy::{ecs::query::Has, prelude::*};
 
 use avian3d::math::*;
 
+/// A plugin for character controller logic.
 pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
@@ -24,7 +27,9 @@ impl Plugin for CharacterControllerPlugin {
 /// An event sent for a movement input action.
 #[derive(Event)]
 pub enum MovementAction {
+    /// Move back and forth in the XZ plane.
     Move(Vector2),
+    /// Jump in the Y direction.
     Jump,
 }
 
@@ -58,24 +63,35 @@ pub struct MaxSlopeAngle(Scalar);
 /// kinematic character controller.
 #[derive(Bundle)]
 pub struct CharacterControllerBundle {
+    /// The character controller marker component.
     character_controller: CharacterController,
+    /// The rigid body component.
     rigid_body: RigidBody,
+    /// The collider component.
     collider: Collider,
+    /// The shape caster used for detecting ground.
     ground_caster: ShapeCaster,
+    /// The locked axes for the character controller.
     locked_axes: LockedAxes,
+    /// The movement components for character
     movement: MovementBundle,
 }
 
 /// A bundle that contains components for character movement.
 #[derive(Bundle)]
 pub struct MovementBundle {
+    /// The acceleration used for character movement.
     acceleration: MovementAcceleration,
+    /// The damping factor used for slowing down movement.
     damping: MovementDampingFactor,
+    /// The strength of a jump.
     jump_impulse: JumpImpulse,
+    /// The maximum angle that a character can jump on
     max_slope_angle: MaxSlopeAngle,
 }
 
 impl MovementBundle {
+    /// Create a new movement bundle with the given parameters.
     pub const fn new(
         acceleration: Scalar,
         damping: Scalar,
@@ -98,6 +114,7 @@ impl Default for MovementBundle {
 }
 
 impl CharacterControllerBundle {
+    /// Create a new character controller from a [`Collider`].
     pub fn new(collider: Collider) -> Self {
         // Create shape caster as a slightly smaller version of collider
         let mut caster_shape = collider.clone();
@@ -119,6 +136,7 @@ impl CharacterControllerBundle {
         }
     }
 
+    /// Set the movement parameters for the character controller.
     pub fn with_movement(
         mut self,
         acceleration: Scalar,

@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*"]
+resolver = "2"
 
 [workspace.dependencies]
 avian3d = { git = "https://github.com/Jondolf/avian", rev = "114554bf61320e03d778c5d8ca67e9ae381476c5" }
@@ -7,9 +8,10 @@ bevy = "0.15.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+missing_docs = "forbid"
 
 [workspace.lints.clippy]
-missing_docs = "forbid"
+missing_docs_in_private_items = "forbid"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]
