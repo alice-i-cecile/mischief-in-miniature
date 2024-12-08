@@ -1,12 +1,12 @@
 //! A Katamari-inspired 3D action game where you play a toy that's come to life, causing chaos.
 
+mod characters;
 mod pausing;
-mod physics;
 
 use avian3d::{math::*, prelude::*};
 use bevy::prelude::*;
+use characters::character_controller::{CharacterControllerBundle, CharacterControllerPlugin};
 use pausing::PausePlugin;
-use physics::character_controller::{CharacterControllerBundle, CharacterControllerPlugin};
 
 fn main() {
     App::new()
