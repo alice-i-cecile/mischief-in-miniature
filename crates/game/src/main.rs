@@ -3,9 +3,9 @@
 mod characters;
 mod pausing;
 
-use avian3d::{math::*, prelude::*};
+use avian3d::prelude::*;
 use bevy::prelude::*;
-use characters::character_controller::{CharacterControllerBundle, CharacterControllerPlugin};
+use characters::character_controller::{CharacterController, CharacterControllerPlugin};
 use pausing::PausePlugin;
 
 fn main() {
@@ -29,15 +29,11 @@ fn setup(
 ) {
     // Player
     commands.spawn((
+        CharacterController,
         Mesh3d(meshes.add(Capsule3d::new(0.4, 1.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform::from_xyz(0.0, 1.5, 0.0),
-        CharacterControllerBundle::new(Collider::capsule(0.4, 1.0)).with_movement(
-            30.0,
-            0.92,
-            7.0,
-            (30.0 as Scalar).to_radians(),
-        ),
+        Collider::capsule(0.4, 1.0),
         Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
         Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
         GravityScale(2.0),

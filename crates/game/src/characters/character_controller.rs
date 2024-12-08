@@ -1,7 +1,10 @@
 //! Movement and controls for playable characters.
 
 use avian3d::prelude::*;
-use bevy::{ecs::query::Has, prelude::*};
+use bevy::{
+    ecs::{component::ComponentId, query::Has, world::DeferredWorld},
+    prelude::*,
+};
 
 use avian3d::math::*;
 
@@ -35,7 +38,60 @@ pub enum MovementAction {
 
 /// A marker component indicating that an entity is using a character controller.
 #[derive(Component)]
+#[require(
+    Transform,
+    Visibility,
+    RigidBody,
+    Collider,
+    ShapeCaster,
+    LockedAxes(||LockedAxes::ROTATION_LOCKED),
+    Friction,
+    Restitution,
+    GravityScale,
+    JumpImpulse,
+    MaxSlopeAngle,
+    MovementAcceleration,
+    MovementDampingFactor,
+)]
+#[component(on_add = setup_shapecaster)]
 pub struct CharacterController;
+
+/// Override the default shapecaster on spawn to be based on the collider.
+fn setup_shapecaster(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+    /// The relative size of the shape caster compared to the collider.
+    /// Setting this value to less than 1.0 prevents the shape caster from
+    /// bouncing on the ground.
+    const CAST_SCALE: Scalar = 0.99;
+
+    /// How far out from the collider the shape caster checks for ground.
+    /// Setting this value above 0 gives a bit of a buffer to help the controls
+    /// feel more responsive.
+    const CAST_RADIUS: Scalar = 0.2;
+
+    /// The resolution of the shape caster, in number of subdivisions.
+    ///
+    /// This is fundamentally a performance vs accuracy tuning knob.
+    const CAST_RESOLUTION: u32 = 10;
+
+    let collider = world
+        .get::<Collider>(entity)
+        .expect("Collider is a required component of CharacterController");
+
+    // Create shape caster as a slightly smaller version of the collider
+    let mut caster_shape = collider.clone();
+    caster_shape.set_scale(Vector::ONE * CAST_SCALE, CAST_RESOLUTION);
+
+    let ground_caster = ShapeCaster::new(
+        caster_shape,
+        Vector::ZERO,
+        Quaternion::default(),
+        Dir3::NEG_Y,
+    )
+    .with_max_distance(CAST_RADIUS);
+
+    let mut shape_caster = world.get_mut::<ShapeCaster>(entity).unwrap();
+    *shape_caster = ground_caster;
+}
 
 /// A marker component indicating that an entity is on the ground.
 #[derive(Component)]
@@ -45,107 +101,41 @@ pub struct Grounded;
 #[derive(Component)]
 pub struct MovementAcceleration(Scalar);
 
+impl Default for MovementAcceleration {
+    fn default() -> Self {
+        Self(30.0)
+    }
+}
+
 /// The damping factor used for slowing down movement.
 #[derive(Component)]
 pub struct MovementDampingFactor(Scalar);
+
+impl Default for MovementDampingFactor {
+    fn default() -> Self {
+        Self(0.9)
+    }
+}
 
 /// The strength of a jump.
 #[derive(Component)]
 pub struct JumpImpulse(Scalar);
 
-/// The maximum angle a slope can have for a character controller
+impl Default for JumpImpulse {
+    fn default() -> Self {
+        Self(7.0)
+    }
+}
+
+/// The maximum angle in radians that a slope can have for a character controller
 /// to be able to climb and jump. If the slope is steeper than this angle,
 /// the character will slide down.
 #[derive(Component)]
 pub struct MaxSlopeAngle(Scalar);
 
-/// A bundle that contains the components needed for a basic
-/// kinematic character controller.
-#[derive(Bundle)]
-pub struct CharacterControllerBundle {
-    /// The character controller marker component.
-    character_controller: CharacterController,
-    /// The rigid body component.
-    rigid_body: RigidBody,
-    /// The collider component.
-    collider: Collider,
-    /// The shape caster used for detecting ground.
-    ground_caster: ShapeCaster,
-    /// The locked axes for the character controller.
-    locked_axes: LockedAxes,
-    /// The movement components for character
-    movement: MovementBundle,
-}
-
-/// A bundle that contains components for character movement.
-#[derive(Bundle)]
-pub struct MovementBundle {
-    /// The acceleration used for character movement.
-    acceleration: MovementAcceleration,
-    /// The damping factor used for slowing down movement.
-    damping: MovementDampingFactor,
-    /// The strength of a jump.
-    jump_impulse: JumpImpulse,
-    /// The maximum angle that a character can jump on
-    max_slope_angle: MaxSlopeAngle,
-}
-
-impl MovementBundle {
-    /// Create a new movement bundle with the given parameters.
-    pub const fn new(
-        acceleration: Scalar,
-        damping: Scalar,
-        jump_impulse: Scalar,
-        max_slope_angle: Scalar,
-    ) -> Self {
-        Self {
-            acceleration: MovementAcceleration(acceleration),
-            damping: MovementDampingFactor(damping),
-            jump_impulse: JumpImpulse(jump_impulse),
-            max_slope_angle: MaxSlopeAngle(max_slope_angle),
-        }
-    }
-}
-
-impl Default for MovementBundle {
+impl Default for MaxSlopeAngle {
     fn default() -> Self {
-        Self::new(30.0, 0.9, 7.0, PI * 0.45)
-    }
-}
-
-impl CharacterControllerBundle {
-    /// Create a new character controller from a [`Collider`].
-    pub fn new(collider: Collider) -> Self {
-        // Create shape caster as a slightly smaller version of collider
-        let mut caster_shape = collider.clone();
-        caster_shape.set_scale(Vector::ONE * 0.99, 10);
-
-        Self {
-            character_controller: CharacterController,
-            rigid_body: RigidBody::Dynamic,
-            collider,
-            ground_caster: ShapeCaster::new(
-                caster_shape,
-                Vector::ZERO,
-                Quaternion::default(),
-                Dir3::NEG_Y,
-            )
-            .with_max_distance(0.2),
-            locked_axes: LockedAxes::ROTATION_LOCKED,
-            movement: MovementBundle::default(),
-        }
-    }
-
-    /// Set the movement parameters for the character controller.
-    pub fn with_movement(
-        mut self,
-        acceleration: Scalar,
-        damping: Scalar,
-        jump_impulse: Scalar,
-        max_slope_angle: Scalar,
-    ) -> Self {
-        self.movement = MovementBundle::new(acceleration, damping, jump_impulse, max_slope_angle);
-        self
+        Self(PI * 0.45)
     }
 }
 
