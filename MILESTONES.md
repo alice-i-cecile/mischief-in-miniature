@@ -18,7 +18,7 @@
 
 ## Basic 3rd person camera
 
-- [] orientable character model
+- [x] orientable character model
 - [] controls move the player relative to their orientation
 - [] camera follows character model
 - [] camera smoothing

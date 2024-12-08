@@ -1,20 +1,25 @@
 //! A Katamari-inspired 3D action game where you play a toy that's come to life, causing chaos.
 
+mod camera;
 mod characters;
 mod pausing;
 
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use camera::CameraPlugin;
 use characters::character_controller::{CharacterController, CharacterControllerPlugin};
 use pausing::PausePlugin;
 
 fn main() {
     App::new()
         .add_plugins((
+            // Bevy
             DefaultPlugins,
+            // Avian
             PhysicsPlugins::default(),
-            PausePlugin,
+            CameraPlugin,
             CharacterControllerPlugin,
+            PausePlugin,
         ))
         .add_systems(Startup, setup)
         .run();
@@ -64,11 +69,5 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 15.0, 0.0),
-    ));
-
-    // Camera
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(-7.0, 9.5, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
