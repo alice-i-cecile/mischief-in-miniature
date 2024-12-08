@@ -11,7 +11,7 @@
 
 ## Hello World
 
-- [] create a Bevy project
+- [x] create a Bevy project
 - [] add camera
 - [] add physics
 - [] make sure the player can jump
