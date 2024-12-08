@@ -12,6 +12,18 @@
 ## Hello World
 
 - [x] create a Bevy project
-- [] add camera
-- [] add physics
-- [] make sure the player can jump
+- [x] add camera
+- [x] add physics
+- [x] make sure the player can jump
+
+## Basic 3rd person camera
+
+- [] orientable character model
+- [] camera follows character model
+- [] camera smoothing
+
+## Data-driven design
+
+- [] add an asset loading state
+- [] define levels in a data-driven way
+- [] define character controllers in a data-driven way
