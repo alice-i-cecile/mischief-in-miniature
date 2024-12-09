@@ -15,12 +15,15 @@ impl Plugin for CameraPlugin {
     }
 }
 
+// The offset from the player character's position in local coordinates.
+const OFFSET: Vec3 = Vec3::new(0., 10., 10.);
+
 /// Setup the initial scene
 fn setup(mut commands: Commands) {
     // Camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-7.0, 9.5, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_translation(OFFSET).looking_at(Vec3::ZERO, Vec3::Y),
         CameraTarget::default(),
     ));
 }
@@ -41,13 +44,14 @@ fn set_target(
     player: Single<&GlobalTransform, With<Player>>,
     mut camera_target: Single<&mut CameraTarget>,
 ) {
-    // The offset from the player character's position in local coordinates.
-    const OFFSET: Vec3 = Vec3::new(0., 10., 10.);
-
     let player_transform = player.into_inner().compute_transform();
 
-    // TODO: vary offset angle based on the player's rotation
-    camera_target.camera_position = player_transform.translation + OFFSET;
+    let player_rotation = player_transform.rotation;
+    // The camera should always be behind the player character,
+    // so we rotate the offset by the player's rotation.
+    let rotated_offset = player_rotation.mul_vec3(OFFSET);
+
+    camera_target.camera_position = player_transform.translation + rotated_offset;
     camera_target.focus_position = player_transform.translation;
 }
 

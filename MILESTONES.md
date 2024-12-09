@@ -20,9 +20,9 @@
 
 - [x] orientable character model
 - [x] camera follows character model
-- [] camera starts at the right location relative to player
+- [x] camera starts at the right location relative to player
 - [x] controls turn the player and move them relative to their orientation
-- [] camera turns with the player
+- [x] camera turns with the player
 
 ## Colliders from meshes
 
