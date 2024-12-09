@@ -17,7 +17,6 @@ impl Plugin for CharacterControllerPlugin {
             Update,
             (
                 keyboard_input,
-                gamepad_input,
                 update_grounded,
                 movement,
                 apply_movement_damping,
@@ -30,8 +29,14 @@ impl Plugin for CharacterControllerPlugin {
 /// An event sent for a movement input action.
 #[derive(Event)]
 pub enum MovementAction {
-    /// Move back and forth in the XZ plane.
-    Move(Vector2),
+    /// Turn to the left
+    TurnLeft,
+    /// Turn to the right
+    TurnRight,
+    /// Move forward
+    MoveForward,
+    /// Move backward
+    MoveBackward,
     /// Jump in the Y direction.
     Jump,
 }
@@ -44,14 +49,11 @@ pub enum MovementAction {
     RigidBody,
     Collider,
     ShapeCaster,
-    LockedAxes(||LockedAxes::ROTATION_LOCKED),
+    LockedAxes(||LockedAxes::new().lock_rotation_x().lock_rotation_z()),
     Friction,
     Restitution,
     GravityScale,
-    JumpImpulse,
-    MaxSlopeAngle,
-    MovementAcceleration,
-    MovementDampingFactor,
+    MovementCharacteristics,
 )]
 #[component(on_add = setup_shapecaster)]
 pub struct CharacterController;
@@ -97,64 +99,87 @@ fn setup_shapecaster(mut world: DeferredWorld, entity: Entity, _id: ComponentId)
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 pub struct Grounded;
-/// The acceleration used for character movement.
-#[derive(Component)]
-pub struct MovementAcceleration(Scalar);
 
-impl Default for MovementAcceleration {
-    fn default() -> Self {
-        Self(30.0)
-    }
+/// The various constants used to define character movement.
+///
+/// All values should be positive.
+#[derive(Component)]
+pub struct MovementCharacteristics {
+    /// The rate of acceleration when moving forward,
+    /// in units per second squared.
+    forward: Scalar,
+    /// The rate of acceleration when moving backward,
+    /// in units per second squared.
+    backward: Scalar,
+    /// The rate of acceleration when turning,
+    /// in radians per second squared.
+    turn_speed: Scalar,
+    /// The amount of impulse applied when jumping.
+    jump_impulse: Scalar,
+    /// The maximum angle in radians that a slope can have for a character controller
+    /// to be able to climb and jump. If the slope is steeper than this angle,
+    /// the character will slide down.
+    max_slope_angle: Scalar,
+    /// The damping factor for linear movement.
+    ///
+    /// This should be in the range [0, 1],
+    /// and represents the fraction of velocity that is retained each second.
+    /// Lower values will cause speed to decay more quickly.
+    linear_vel_decay: Scalar,
+    /// The damping factor for angular movement.
+    ///
+    /// This should be in the range [0, 1],
+    /// and represents the fraction of velocity that is retained each second.
+    /// Lower values will cause speed to decay more quickly.
+    angular_vel_decay: Scalar,
 }
 
-/// The damping factor used for slowing down movement.
-#[derive(Component)]
-pub struct MovementDampingFactor(Scalar);
-
-impl Default for MovementDampingFactor {
+impl Default for MovementCharacteristics {
     fn default() -> Self {
-        Self(0.9)
-    }
-}
-
-/// The strength of a jump.
-#[derive(Component)]
-pub struct JumpImpulse(Scalar);
-
-impl Default for JumpImpulse {
-    fn default() -> Self {
-        Self(7.0)
-    }
-}
-
-/// The maximum angle in radians that a slope can have for a character controller
-/// to be able to climb and jump. If the slope is steeper than this angle,
-/// the character will slide down.
-#[derive(Component)]
-pub struct MaxSlopeAngle(Scalar);
-
-impl Default for MaxSlopeAngle {
-    fn default() -> Self {
-        Self(PI * 0.45)
+        Self {
+            forward: 50.0,
+            backward: 30.0,
+            turn_speed: 20.0,
+            jump_impulse: 7.0,
+            max_slope_angle: PI * 0.45,
+            linear_vel_decay: 0.9,
+            angular_vel_decay: 0.9,
+        }
     }
 }
 
 /// Sends [`MovementAction`] events based on keyboard input.
+// TODO: just use LWIM for this
 fn keyboard_input(
     mut movement_event_writer: EventWriter<MovementAction>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    let up = keyboard_input.any_pressed([KeyCode::KeyW, KeyCode::ArrowUp]);
-    let down = keyboard_input.any_pressed([KeyCode::KeyS, KeyCode::ArrowDown]);
+    let forward = keyboard_input.any_pressed([KeyCode::KeyW, KeyCode::ArrowUp]);
+    let back = keyboard_input.any_pressed([KeyCode::KeyS, KeyCode::ArrowDown]);
     let left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
     let right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
 
     let horizontal = right as i8 - left as i8;
-    let vertical = up as i8 - down as i8;
-    let direction = Vector2::new(horizontal as Scalar, vertical as Scalar).clamp_length_max(1.0);
+    let vertical = forward as i8 - back as i8;
 
-    if direction != Vector2::ZERO {
-        movement_event_writer.send(MovementAction::Move(direction));
+    match horizontal {
+        1 => {
+            movement_event_writer.send(MovementAction::TurnRight);
+        }
+        -1 => {
+            movement_event_writer.send(MovementAction::TurnLeft);
+        }
+        _ => {}
+    };
+
+    match vertical {
+        1 => {
+            movement_event_writer.send(MovementAction::MoveForward);
+        }
+        -1 => {
+            movement_event_writer.send(MovementAction::MoveBackward);
+        }
+        _ => {}
     }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
@@ -162,44 +187,20 @@ fn keyboard_input(
     }
 }
 
-/// Sends [`MovementAction`] events based on gamepad input.
-fn gamepad_input(
-    mut movement_event_writer: EventWriter<MovementAction>,
-    gamepads: Query<&Gamepad>,
-) {
-    for gamepad in gamepads.iter() {
-        if let (Some(x), Some(y)) = (
-            gamepad.get(GamepadAxis::LeftStickX),
-            gamepad.get(GamepadAxis::LeftStickY),
-        ) {
-            movement_event_writer.send(MovementAction::Move(
-                Vector2::new(x as Scalar, y as Scalar).clamp_length_max(1.0),
-            ));
-        }
-
-        if gamepad.just_pressed(GamepadButton::South) {
-            movement_event_writer.send(MovementAction::Jump);
-        }
-    }
-}
-
 /// Updates the [`Grounded`] status for character controllers.
 fn update_grounded(
     mut commands: Commands,
     mut query: Query<
-        (Entity, &ShapeHits, &Rotation, Option<&MaxSlopeAngle>),
+        (Entity, &ShapeHits, &Rotation, &MovementCharacteristics),
         With<CharacterController>,
     >,
 ) {
-    for (entity, hits, rotation, max_slope_angle) in &mut query {
+    for (entity, hits, rotation, movement_characteristics) in &mut query {
         // The character is grounded if the shape caster has a hit with a normal
         // that isn't too steep.
         let is_grounded = hits.iter().any(|hit| {
-            if let Some(angle) = max_slope_angle {
-                (rotation * -hit.normal2).angle_between(Vector::Y).abs() <= angle.0
-            } else {
-                true
-            }
+            (rotation * -hit.normal2).angle_between(Vector::Y).abs()
+                <= movement_characteristics.max_slope_angle
         });
 
         if is_grounded {
@@ -215,9 +216,10 @@ fn movement(
     time: Res<Time>,
     mut movement_event_reader: EventReader<MovementAction>,
     mut controllers: Query<(
-        &MovementAcceleration,
-        &JumpImpulse,
+        &Transform,
+        &MovementCharacteristics,
         &mut LinearVelocity,
+        &mut AngularVelocity,
         Has<Grounded>,
     )>,
 ) {
@@ -226,17 +228,32 @@ fn movement(
     let delta_time = time.delta_secs_f64().adjust_precision();
 
     for event in movement_event_reader.read() {
-        for (movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
-            &mut controllers
+        for (
+            transform,
+            movement_characteristics,
+            mut linear_velocity,
+            mut angular_velocity,
+            is_grounded,
+        ) in &mut controllers
         {
             match event {
-                MovementAction::Move(direction) => {
-                    linear_velocity.x += direction.x * movement_acceleration.0 * delta_time;
-                    linear_velocity.z -= direction.y * movement_acceleration.0 * delta_time;
+                MovementAction::TurnLeft => {
+                    angular_velocity.y += movement_characteristics.turn_speed * delta_time;
+                }
+                MovementAction::TurnRight => {
+                    angular_velocity.y -= movement_characteristics.turn_speed * delta_time;
+                }
+                MovementAction::MoveForward => {
+                    linear_velocity.0 +=
+                        transform.forward() * movement_characteristics.forward * delta_time;
+                }
+                MovementAction::MoveBackward => {
+                    linear_velocity.0 +=
+                        transform.back() * movement_characteristics.backward * delta_time
                 }
                 MovementAction::Jump => {
                     if is_grounded {
-                        linear_velocity.y = jump_impulse.0;
+                        linear_velocity.y = movement_characteristics.jump_impulse;
                     }
                 }
             }
@@ -245,10 +262,19 @@ fn movement(
 }
 
 /// Slows down movement in the XZ plane.
-fn apply_movement_damping(mut query: Query<(&MovementDampingFactor, &mut LinearVelocity)>) {
-    for (damping_factor, mut linear_velocity) in &mut query {
+fn apply_movement_damping(
+    mut query: Query<(
+        &MovementCharacteristics,
+        &mut LinearVelocity,
+        &mut AngularVelocity,
+    )>,
+) {
+    for (movement_characteristics, mut linear_velocity, mut angular_velocity) in &mut query {
         // We could use `LinearDamping`, but we don't want to dampen movement along the Y axis
-        linear_velocity.x *= damping_factor.0;
-        linear_velocity.z *= damping_factor.0;
+        linear_velocity.x *= movement_characteristics.linear_vel_decay;
+        linear_velocity.z *= movement_characteristics.linear_vel_decay;
+        // Angular damping is done here for consistency
+        // All other axis are locked, so we only need to dampen the Y axis
+        angular_velocity.y *= movement_characteristics.angular_vel_decay;
     }
 }
