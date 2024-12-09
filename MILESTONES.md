@@ -26,7 +26,8 @@
 
 ## Better actions
 
-- [] strafing
+- [x] strafing
+- [ ] remove gravity scale weirdness
 - [] port to LWIM
 
 ## Content 101

@@ -33,6 +33,10 @@ pub enum MovementAction {
     TurnLeft,
     /// Turn to the right
     TurnRight,
+    /// Strafe left
+    StrafeLeft,
+    /// Strafe right
+    StrafeRight,
     /// Move forward
     MoveForward,
     /// Move backward
@@ -108,6 +112,9 @@ pub struct MovementCharacteristics {
     /// The rate of acceleration when moving forward,
     /// in units per second squared.
     forward: Scalar,
+    /// The rate of acceleration when strafing sideways,
+    /// in units per second squared.
+    strafe: Scalar,
     /// The rate of acceleration when moving backward,
     /// in units per second squared.
     backward: Scalar,
@@ -138,6 +145,7 @@ impl Default for MovementCharacteristics {
     fn default() -> Self {
         Self {
             forward: 50.0,
+            strafe: 30.0,
             backward: 30.0,
             turn_speed: 20.0,
             jump_impulse: 7.0,
@@ -156,13 +164,19 @@ fn keyboard_input(
 ) {
     let forward = keyboard_input.any_pressed([KeyCode::KeyW, KeyCode::ArrowUp]);
     let back = keyboard_input.any_pressed([KeyCode::KeyS, KeyCode::ArrowDown]);
-    let left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
-    let right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
 
-    let horizontal = right as i8 - left as i8;
+    // FIXME: arrow key bindings don't play nice with strafe keys
+    let strafe_left = keyboard_input.any_pressed([KeyCode::KeyQ, KeyCode::ArrowLeft]);
+    let strafe_right = keyboard_input.any_pressed([KeyCode::KeyE, KeyCode::ArrowRight]);
+
+    let turn_left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
+    let turn_right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
+
+    let turning = turn_right as i8 - turn_left as i8;
+    let horizontal = strafe_right as i8 - strafe_left as i8;
     let vertical = forward as i8 - back as i8;
 
-    match horizontal {
+    match turning {
         1 => {
             movement_event_writer.send(MovementAction::TurnRight);
         }
@@ -171,6 +185,16 @@ fn keyboard_input(
         }
         _ => {}
     };
+
+    match horizontal {
+        1 => {
+            movement_event_writer.send(MovementAction::StrafeRight);
+        }
+        -1 => {
+            movement_event_writer.send(MovementAction::StrafeLeft);
+        }
+        _ => {}
+    }
 
     match vertical {
         1 => {
@@ -250,6 +274,14 @@ fn movement(
                 MovementAction::MoveBackward => {
                     linear_velocity.0 +=
                         transform.back() * movement_characteristics.backward * delta_time
+                }
+                MovementAction::StrafeLeft => {
+                    linear_velocity.0 +=
+                        transform.left() * movement_characteristics.strafe * delta_time;
+                }
+                MovementAction::StrafeRight => {
+                    linear_velocity.0 +=
+                        transform.right() * movement_characteristics.strafe * delta_time;
                 }
                 MovementAction::Jump => {
                     if is_grounded {
