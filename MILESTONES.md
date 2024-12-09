@@ -19,9 +19,9 @@
 ## Basic 3rd person camera
 
 - [x] orientable character model
-- [] controls move the player relative to their orientation
-- [] camera follows character model
-- [] camera smoothing
+- [x] camera follows character model
+- [] controls turn the player and move them relative to their orientation
+- [] camera turns with the player
 
 ## Colliders from meshes
 

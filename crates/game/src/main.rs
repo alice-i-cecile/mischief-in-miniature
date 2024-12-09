@@ -7,7 +7,10 @@ mod pausing;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use camera::CameraPlugin;
-use characters::character_controller::{CharacterController, CharacterControllerPlugin};
+use characters::{
+    character_controller::{CharacterController, CharacterControllerPlugin},
+    Player,
+};
 use pausing::PausePlugin;
 
 fn main() {
@@ -34,6 +37,7 @@ fn setup(
 ) {
     // Player
     commands.spawn((
+        Player,
         CharacterController,
         SceneRoot(assets.load("player.glb#Scene0")),
         Transform::from_xyz(0.0, 1.0, 0.0),
