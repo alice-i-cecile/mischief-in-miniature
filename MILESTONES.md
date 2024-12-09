@@ -20,6 +20,7 @@
 
 - [x] orientable character model
 - [x] camera follows character model
+- [] camera starts at the right location relative to player
 - [] controls turn the player and move them relative to their orientation
 - [] camera turns with the player
 
