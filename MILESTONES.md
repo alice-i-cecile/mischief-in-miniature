@@ -24,6 +24,18 @@
 - [x] controls turn the player and move them relative to their orientation
 - [x] camera turns with the player
 
+## Better actions
+
+- [] strafing
+- [] port to LWIM
+
+## Content 101
+
+- [] gather references
+- [] write down art style guidelines
+- [] design 3 toys
+- [] design 3 levels
+
 ## Colliders from meshes
 
 - [] generate collider based on mesh
