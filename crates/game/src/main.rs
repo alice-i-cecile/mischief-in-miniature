@@ -44,7 +44,6 @@ fn setup(
         Collider::capsule(0.2, 0.8),
         Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
         Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
-        GravityScale(2.0),
     ));
 
     // A cube to move around

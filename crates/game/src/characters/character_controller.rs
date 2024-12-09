@@ -56,7 +56,6 @@ pub enum MovementAction {
     LockedAxes(||LockedAxes::new().lock_rotation_x().lock_rotation_z()),
     Friction,
     Restitution,
-    GravityScale,
     MovementCharacteristics,
 )]
 #[component(on_add = setup_shapecaster)]
