@@ -8,6 +8,10 @@ This project was created to dogfood Bevy: testing its capabilities in earnest to
 If we're lucky, we'll even get a sweet game out of it!
 If this game is sold, all profits will go to the Bevy Foundation <3
 
+## Contributing
+
+This project uses Git LFS. See [the Github docs](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage) for advice on getting set up. Once it's installed, use `git lfs pull` to download the latest copy of the assets.
+
 ## Licensing
 
 All code and design work is licensed under your choice of the MIT and Apache v2 license.
